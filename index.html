@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>鬼畜 · 中格完整 · 八格回声</title>
-<meta name="description" content="中间格按顺序完整播放两段原片，其余八格跟随节奏卡顿、重复。">
+<title>鬼畜 · CENTER UNCUT · EIGHT ECHOES</title>
+<meta name="description" content="The center cell plays both clips in full; the other eight follow its clock with their own delay and glitch.">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 html,body{height:100%}
@@ -149,7 +149,7 @@ main{min-height:0;display:flex;align-items:center;justify-content:center;padding
 /* the master cell */
 .cell.master{box-shadow:inset 0 0 0 2px rgba(216,255,62,.85);z-index:2}
 .cell.master::after{
-  content:"MASTER · 完整播放";position:absolute;z-index:6;left:7px;top:7px;
+  content:"MASTER · UNCUT";position:absolute;z-index:6;left:7px;top:7px;
   font-family:var(--mono);font-size:7px;letter-spacing:.14em;color:var(--lime);
   background:rgba(0,0,0,.6);padding:2px 6px;pointer-events:none;
 }
@@ -271,11 +271,11 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     <span class="cn" data-text="鬼畜">鬼畜</span>
     <span class="en">GUICHU<br>DECK</span>
   </div>
-  <div class="seq" id="seqLabel">SEQ 01 · <b>夜宴</b></div>
+  <div class="seq" id="seqLabel">SEQ 01 · <b>BANQUET</b></div>
   <div class="controls">
-    <button class="transport" id="btnPlay" aria-pressed="false"><i></i><span id="playText">播放</span></button>
+    <button class="transport" id="btnPlay" aria-pressed="false"><i></i><span id="playText">PLAY</span></button>
     <button class="tool on" id="btnMute" aria-pressed="false">SOUND <span>ON</span></button>
-    <button class="tool" id="btnFull" title="全屏 (F)">⛶</button>
+    <button class="tool" id="btnFull" title="Fullscreen (F)">⛶</button>
   </div>
 </header>
 
@@ -288,16 +288,15 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       <div class="ov active" id="ovStart">
         <p class="kicker">ONE SCREEN / TWO CLIPS / UNCUT</p>
         <h1 class="big" data-text="鬼畜">鬼畜</h1>
-        <p class="ov-sub">中间格完整播放两段原片<br><em>其余八格跟随节奏卡顿、重复</em></p>
-        <button class="start" id="btnStart" disabled><i></i>载入中</button>
-        <p class="ov-foot" id="ovFoot">素材 A —:— · 素材 B —:—</p>
+        <button class="start" id="btnStart" disabled><i></i>LOADING</button>
+        <p class="ov-foot" id="ovFoot">CLIP A —:— · CLIP B —:—</p>
       </div>
       <div class="ov" id="ovEnd">
         <p class="kicker">END</p>
         <h1 class="big" data-text="鬼畜">鬼畜</h1>
-        <p class="ov-sub">两段原片 · 完整播放完毕</p>
-        <button class="start" id="btnAgain"><i></i>从头再看</button>
-        <p class="ov-foot">中格完整 · 八格回声</p>
+        <p class="ov-sub">BOTH CLIPS · PLAYED IN FULL</p>
+        <button class="start" id="btnAgain"><i></i>WATCH AGAIN</button>
+        <p class="ov-foot">CENTER UNCUT · EIGHT ECHOES</p>
       </div>
     </div>
   </div>
@@ -312,7 +311,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     <div class="playhead" id="playhead"></div>
   </div>
   <div class="tc"><b id="tcNow">00:00</b> / <span id="tcAll">00:00</span></div>
-  <button class="replay" id="btnReplay" title="重播">↻</button>
+  <button class="replay" id="btnReplay" title="Replay">↻</button>
 </footer>
 
 <!-- 原声：从原片提取的 PCM 音轨 -->
@@ -331,8 +330,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
   const mmss = s => pad2(Math.floor(Math.max(0, s) / 60)) + ':' + pad2(Math.floor(Math.max(0, s) % 60));
 
   const M = {
-    A: { url: 'media/a.mp4', dur: 53, name: '夜宴' },
-    B: { url: 'media/b.mp4', dur: 32.83, name: '阳台' }
+    A: { url: 'media/a.mp4', dur: 53, name: 'BANQUET' },
+    B: { url: 'media/b.mp4', dur: 32.83, name: 'BALCONY' }
   };
 
   const S = {
@@ -373,7 +372,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
           '<video class="va on" playsinline muted preload="metadata"></video>' +
           '<video class="vb" playsinline muted preload="metadata"></video>' +
           '<div class="flash"></div>' +
-          '<span class="tag" id="masterTag">A · 夜宴</span>';
+          '<span class="tag" id="masterTag">A · BANQUET</span>';
         const va = el.querySelector('.va');
         const vb = el.querySelector('.vb');
         va.src = M.A.url;
@@ -396,7 +395,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
         const a = document.createElement('audio');
         a.src = 'media/a.wav';
         a.preload = 'none';
-        a.volume = 0.2 + (k % 4) * 0.05;
+        a.volume = 0.1 + (k % 4) * 0.025;
         a.muted = S.muted;
         try { a.preservesPitch = false; } catch (e) {}
 
@@ -459,7 +458,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     const b = $('#btnPlay');
     b.classList.toggle('playing', S.playing);
     b.setAttribute('aria-pressed', String(S.playing));
-    $('#playText').textContent = S.playing ? '暂停' : (S.started ? '继续' : '播放');
+    $('#playText').textContent = S.playing ? 'PAUSE' : (S.started ? 'RESUME' : 'PLAY');
   }
 
   function startShow() {
@@ -540,9 +539,9 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     });
 
     echoes.forEach((e, k) => {
-      e.nextStutter = 1.2 + k * 0.2 + Math.random() * 0.35;
-      e.nextFreeze = 2.1 + k * 0.26 + Math.random() * 0.45;
-      e.nextRate = 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.nextStutter = 2.0 + k * 0.24 + Math.random() * 0.6;
+      e.nextFreeze = 3.0 + k * 0.3 + Math.random() * 0.8;
+      e.nextRate = 4.0 + k * 0.45 + Math.random() * 1.6;
       e.nextFlip = 2.5 + k * 0.33 + Math.random() * 1.4;
       e.rateUntil = 0;
       e.v.playbackRate = 1;
@@ -596,9 +595,9 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     });
 
     echoes.forEach((e, k) => {
-      e.nextStutter = M.A.dur + 1.2 + k * 0.2 + Math.random() * 0.35;
-      e.nextFreeze = M.A.dur + 2.1 + k * 0.26 + Math.random() * 0.45;
-      e.nextRate = M.A.dur + 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.nextStutter = M.A.dur + 2.0 + k * 0.24 + Math.random() * 0.6;
+      e.nextFreeze = M.A.dur + 3.0 + k * 0.3 + Math.random() * 0.8;
+      e.nextRate = M.A.dur + 4.0 + k * 0.45 + Math.random() * 1.6;
       e.nextFlip = M.A.dur + 2.5 + k * 0.33 + Math.random() * 1.4;
       e.rateUntil = 0;
       e.v.playbackRate = 1;
@@ -642,8 +641,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
   function stutterCell(e, now, cap) {
     if (e.stuck || e.freezeUntil) return;
-    if (echoes.filter(x => x.stuck).length >= (cap || 3)) return;
-    e.stuck = { point: Math.max(0, e.v.currentTime - 0.02), next: now, until: now + 280 + Math.random() * 220 };
+    if (echoes.filter(x => x.stuck).length >= (cap || 2)) return;
+    e.stuck = { point: Math.max(0, e.v.currentTime - 0.02), next: now, until: now + 200 + Math.random() * 160 };
     e.el.classList.add('stuck');
     flash(e);
   }
@@ -657,9 +656,9 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
   function freezeCell(e, now) {
     if (e.stuck || e.freezeUntil) return;
-    if (echoes.filter(x => x.freezeUntil).length >= 2) return;
+    if (echoes.filter(x => x.freezeUntil).length >= 1) return;
     e.v.pause();
-    e.freezeUntil = now + 300 + Math.random() * 320;
+    e.freezeUntil = now + 220 + Math.random() * 220;
     e.el.classList.add('frozen');
     flash(e);
   }
@@ -670,10 +669,10 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     if (!tap || !S.playing) return;
     try { tap.currentTime = Math.max(0, ct - 0.12 - Math.random() * 0.4); } catch (err) {}
     tap.muted = S.muted;
-    tap.volume = 0.45;
+    tap.volume = 0.36;
     const p = tap.play(); if (p && p.catch) p.catch(() => {});
     S.tapUntil = now + 260;
-    if (aud) { aud.volume = 0.5; S.duckUntil = now + 230; }
+    if (aud) { aud.volume = 0.62; S.duckUntil = now + 230; }
     const e = echoes[(Math.random() * echoes.length) | 0];
     if (e) flash(e);
   }
@@ -683,7 +682,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     S.peak = { until: now + pk.dur * 1000, nextStutter: 0, nextRate: 0, nextTap: 0, nextFlip: 0 };
     document.body.classList.add('peak');
     flashAll();
-    for (let k = 0; k < 5; k++) {
+    for (let k = 0; k < 4; k++) {
       const e = echoes[k];
       if (!e || e.stuck || e.freezeUntil) continue;
       e.stuck = { point: Math.max(0, e.v.currentTime - 0.03), next: now, until: now + 200 + Math.random() * 160 };
@@ -701,20 +700,20 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       return;
     }
     if (now >= p.nextStutter) {
-      p.nextStutter = now + 170;
-      for (let k = 0; k < 3; k++) {
+      p.nextStutter = now + 220;
+      for (let k = 0; k < 2; k++) {
         const e = echoes[(Math.random() * echoes.length) | 0];
         if (e) stutterCell(e, now, 6);
       }
     }
     if (now >= p.nextRate) {
-      p.nextRate = now + 330;
+      p.nextRate = now + 420;
       const e = echoes[(Math.random() * echoes.length) | 0];
       if (e && !e.stuck && !e.freezeUntil) {
-        const r = [0.5, 0.6, 1.8, 2][(Math.random() * 4) | 0];
+        const r = [0.6, 0.75, 1.5, 1.8][(Math.random() * 4) | 0];
         e.v.playbackRate = r;
         e.a.playbackRate = r;
-        e.rateUntil = now + 320 + Math.random() * 300;
+        e.rateUntil = now + 260 + Math.random() * 240;
       }
     }
     if (now >= p.nextTap) {
@@ -806,12 +805,12 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
       if (gt >= e.nextStutter) {
         stutterCell(e, now);
-        e.nextStutter = gt + 1.0 + Math.random() * 1.5;
+        e.nextStutter = gt + 1.8 + Math.random() * 2.2;
         return;
       }
       if (gt >= e.nextFreeze) {
         freezeCell(e, now);
-        e.nextFreeze = gt + 2.0 + Math.random() * 2.1;
+        e.nextFreeze = gt + 3.0 + Math.random() * 2.6;
         return;
       }
 
@@ -819,12 +818,12 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       if (e.rateUntil) {
         if (now > e.rateUntil) { e.rateUntil = 0; e.v.playbackRate = 1; e.a.playbackRate = 1; }
       } else if (gt >= e.nextRate) {
-        e.nextRate = gt + 3.2 + Math.random() * 3.6;
-        const rates = [0.6, 0.75, 1.35, 1.6];
+        e.nextRate = gt + 4.2 + Math.random() * 4.2;
+        const rates = [0.75, 0.85, 1.2, 1.35];
         const r = rates[(Math.random() * rates.length) | 0];
         e.v.playbackRate = r;
         e.a.playbackRate = r;
-        e.rateUntil = now + 420 + Math.random() * 420;
+        e.rateUntil = now + 320 + Math.random() * 320;
         flash(e);
       }
 
@@ -936,18 +935,18 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
   Promise.all([loadClip(M.A.url), loadClip(M.B.url)]).then(([da, db]) => {
     if (!da && !db) {
       $('.kicker').textContent = 'MEDIA NOT FOUND';
-      $('#ovFoot').textContent = '读不到 media/a.mp4 或 media/b.mp4 —— 请确认 media 文件夹与 index.html 在同一个目录';
-      $('#btnStart').textContent = '素材缺失';
+      $('#ovFoot').textContent = 'Cannot load media/a.mp4 or media/b.mp4 — keep the media folder next to index.html';
+      $('#btnStart').textContent = 'MEDIA MISSING';
       return;
     }
     M.A.dur = da || 53;
     M.B.dur = db || 32.83;
     updateLayout();
     buildPeaks();
-    $('#ovFoot').textContent = '素材 A ' + mmss(M.A.dur) + ' · 素材 B ' + mmss(M.B.dur) + ' · 中格顺序完整播放';
+    $('#ovFoot').textContent = 'CLIP A ' + mmss(M.A.dur) + ' · CLIP B ' + mmss(M.B.dur) + ' · CENTER PLAYS BOTH, UNCUT';
     const btn = $('#btnStart');
     btn.disabled = false;
-    btn.innerHTML = '<i></i>开始播放';
+    btn.innerHTML = '<i></i>START';
     updateTransport();
   });
 
