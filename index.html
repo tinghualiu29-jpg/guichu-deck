@@ -142,6 +142,10 @@ main{min-height:0;display:flex;align-items:center;justify-content:center;padding
 .cell.stuck .flash{background:var(--red);opacity:.1;animation:none}
 .cell.frozen{box-shadow:inset 0 0 0 1px rgba(0,225,255,.55)}
 
+/* 镜像 / 水平翻转：只作用于八个回声格 */
+.cell.flip{transform:scaleX(-1)}
+.cell.flip video.on{filter:contrast(1.08) saturate(1.15)}
+
 /* the master cell */
 .cell.master{box-shadow:inset 0 0 0 2px rgba(216,255,62,.85);z-index:2}
 .cell.master::after{
@@ -398,7 +402,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
         cells.push({
           i, el, v, a, master: false, stuck: null, freezeUntil: 0,
-          rateUntil: 0,
+          rateUntil: 0, flipUntil: 0,
+          nextFlip: 2.5 + k * 0.33 + Math.random() * 1.4,
           nextRate: 3.0 + k * 0.4,
           delay: DELAYS[k] + Math.random() * 0.03,
           nextStutter: 1.2 + k * 0.2,
@@ -521,7 +526,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     echoes.forEach(e => {
       e.stuck = null;
       e.freezeUntil = 0;
-      e.el.classList.remove('stuck', 'frozen');
+      e.flipUntil = 0;
+      e.el.classList.remove('stuck', 'frozen', 'flip');
       if (e.v.getAttribute('src') !== M.A.url) {
         e.v.src = M.A.url;
         e.v.load();
@@ -537,6 +543,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       e.nextStutter = 1.2 + k * 0.2 + Math.random() * 0.35;
       e.nextFreeze = 2.1 + k * 0.26 + Math.random() * 0.45;
       e.nextRate = 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.nextFlip = 2.5 + k * 0.33 + Math.random() * 1.4;
       e.rateUntil = 0;
       e.v.playbackRate = 1;
       e.v.muted = S.muted;
@@ -578,7 +585,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     echoes.forEach(e => {
       e.stuck = null;
       e.freezeUntil = 0;
-      e.el.classList.remove('stuck', 'frozen');
+      e.flipUntil = 0;
+      e.el.classList.remove('stuck', 'frozen', 'flip');
       e.v.src = M.B.url;
       e.v.load();
       e.v.classList.add('on');
@@ -591,6 +599,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       e.nextStutter = M.A.dur + 1.2 + k * 0.2 + Math.random() * 0.35;
       e.nextFreeze = M.A.dur + 2.1 + k * 0.26 + Math.random() * 0.45;
       e.nextRate = M.A.dur + 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.nextFlip = M.A.dur + 2.5 + k * 0.33 + Math.random() * 1.4;
       e.rateUntil = 0;
       e.v.playbackRate = 1;
       e.v.muted = S.muted;
@@ -639,6 +648,13 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     flash(e);
   }
 
+  function flipCell(e, now) {
+    if (e.master) return;
+    e.flipUntil = now + 280 + Math.random() * 900;
+    e.el.classList.add('flip');
+    flash(e);
+  }
+
   function freezeCell(e, now) {
     if (e.stuck || e.freezeUntil) return;
     if (echoes.filter(x => x.freezeUntil).length >= 2) return;
@@ -664,7 +680,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
   /* ---------- peak bursts ---------- */
   function startPeak(pk, now) {
-    S.peak = { until: now + pk.dur * 1000, nextStutter: 0, nextRate: 0, nextTap: 0 };
+    S.peak = { until: now + pk.dur * 1000, nextStutter: 0, nextRate: 0, nextTap: 0, nextFlip: 0 };
     document.body.classList.add('peak');
     flashAll();
     for (let k = 0; k < 5; k++) {
@@ -705,6 +721,11 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       p.nextTap = now + 460;
       triggerTap(now, ct);
     }
+    if (now >= p.nextFlip) {
+      p.nextFlip = now + 240;
+      const e = echoes[(Math.random() * echoes.length) | 0];
+      if (e && !e.flipUntil) flipCell(e, now);
+    }
   }
 
   /* ---------------- clock ---------------- */
@@ -744,6 +765,17 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
     /* echoes follow the middle cell with their own delay and their own beat */
     const ed = S.track ? M.B.dur : M.A.dur;
     echoes.forEach((e, k) => {
+      /* 镜像 / 水平翻转：随机挑格短暂翻转，最多同时三格 */
+      if (e.flipUntil) {
+        if (now > e.flipUntil) {
+          e.flipUntil = 0;
+          e.el.classList.remove('flip');
+        }
+      } else if (gt >= e.nextFlip) {
+        if (echoes.filter(x => x.flipUntil).length < 3) flipCell(e, now);
+        e.nextFlip = gt + 1.6 + Math.random() * 3.2;
+      }
+
       if (e.stuck) {
         if (now >= e.stuck.next) {
           e.stuck.next = now + 105;
