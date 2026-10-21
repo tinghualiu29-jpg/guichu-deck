@@ -312,10 +312,10 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 </footer>
 
 <!-- 原声：从原片提取的 PCM 音轨 -->
-<audio id="audA" src="media/a.wav" preload="auto"></audio>
-<audio id="audB" src="media/b.wav" preload="auto"></audio>
-<audio id="tapA" src="media/a.wav" preload="auto"></audio>
-<audio id="tapB" src="media/b.wav" preload="auto"></audio>
+<audio id="audA" src="media/a.wav" preload="metadata"></audio>
+<audio id="audB" src="media/b.wav" preload="metadata"></audio>
+<audio id="tapA" src="media/a.wav" preload="metadata"></audio>
+<audio id="tapB" src="media/b.wav" preload="metadata"></audio>
 
 <script>
 (function () {
@@ -366,8 +366,8 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
       if (i === 4) {
         el.classList.add('master');
         el.innerHTML =
-          '<video class="va on" playsinline muted preload="auto"></video>' +
-          '<video class="vb" playsinline muted preload="auto"></video>' +
+          '<video class="va on" playsinline muted preload="metadata"></video>' +
+          '<video class="vb" playsinline muted preload="metadata"></video>' +
           '<div class="flash"></div>' +
           '<span class="tag" id="masterTag">A · 夜宴</span>';
         const va = el.querySelector('.va');
@@ -379,7 +379,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
         cells.push({ i, el, va, vb, v: va, master: true, stuck: null, freezeUntil: 0 });
       } else {
         el.innerHTML =
-          '<video class="on" playsinline muted preload="auto"></video>' +
+          '<video class="on" playsinline preload="metadata"></video>' +
           '<div class="flash"></div>';
         const v = el.querySelector('video');
         const k = i < 4 ? i : i - 1;
@@ -391,7 +391,7 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
 
         const a = document.createElement('audio');
         a.src = 'media/a.wav';
-        a.preload = 'auto';
+        a.preload = 'none';
         a.volume = 0.2 + (k % 4) * 0.05;
         a.muted = S.muted;
         try { a.preservesPitch = false; } catch (e) {}
@@ -902,14 +902,14 @@ body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
   audioInit();
 
   Promise.all([loadClip(M.A.url), loadClip(M.B.url)]).then(([da, db]) => {
-    if (!da || !db) {
+    if (!da && !db) {
       $('.kicker').textContent = 'MEDIA NOT FOUND';
       $('#ovFoot').textContent = '读不到 media/a.mp4 或 media/b.mp4 —— 请确认 media 文件夹与 index.html 在同一个目录';
       $('#btnStart').textContent = '素材缺失';
       return;
     }
-    M.A.dur = da;
-    M.B.dur = db;
+    M.A.dur = da || 53;
+    M.B.dur = db || 32.83;
     updateLayout();
     buildPeaks();
     $('#ovFoot').textContent = '素材 A ' + mmss(M.A.dur) + ' · 素材 B ' + mmss(M.B.dur) + ' · 中格顺序完整播放';
