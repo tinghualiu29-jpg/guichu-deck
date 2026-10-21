@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>鬼畜 · 中格完整 · 八格回声</title>
+<meta name="description" content="中间格按顺序完整播放两段原片，其余八格跟随节奏卡顿、重复。">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+:root{
+  --bg:#050505;
+  --panel:#0B0B0B;
+  --ink:#EFE9DC;
+  --dim:#8B8476;
+  --dimmer:#5B564D;
+  --line:rgba(239,233,220,.14);
+  --line-soft:rgba(239,233,220,.06);
+  --red:#FF3B1F;
+  --cyan:#00E1FF;
+  --lime:#D8FF3E;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+}
+body{
+  margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  display:grid;grid-template-rows:54px minmax(0,1fr) 46px;
+  height:100vh;height:100dvh;overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:90;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);
+  mix-blend-mode:overlay;opacity:.5;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:91;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:1px solid var(--cyan);outline-offset:3px}
+
+/* header */
+.bar{
+  display:flex;align-items:center;gap:16px;padding:0 14px;
+  border-bottom:1px solid var(--line);background:linear-gradient(#0C0C0C,#070707);
+  position:relative;z-index:40;
+}
+.brand{display:flex;align-items:center;gap:10px;flex:none}
+.brand .cn{
+  position:relative;font-size:24px;font-weight:900;letter-spacing:-.07em;line-height:1;
+  animation:glitchA 7.5s steps(1,end) infinite;
+}
+.brand .cn::before,.brand .cn::after{
+  content:attr(data-text);position:absolute;left:0;top:0;mix-blend-mode:screen;pointer-events:none;
+}
+.brand .cn::before{color:var(--red);transform:translate(-2px,1px);opacity:.85}
+.brand .cn::after{color:var(--cyan);transform:translate(2px,-1px);opacity:.8}
+@keyframes glitchA{
+  0%,90%,100%{transform:none;filter:none}
+  91%{transform:translate(-1px,1px)}
+  92%{transform:translate(2px,-1px);filter:contrast(1.3)}
+  93%{transform:translate(-2px,0)}
+  94%{transform:none}
+  96%{transform:translate(1px,0)}
+  97%{transform:none}
+}
+.brand .en{font-family:var(--mono);font-size:7px;line-height:1.35;letter-spacing:.2em;color:var(--dimmer)}
+.seq{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--dim);
+  padding-left:16px;border-left:1px solid var(--line-soft);white-space:nowrap;
+}
+.seq b{color:var(--ink);font-weight:400}
+.controls{display:flex;align-items:center;gap:8px;margin-left:auto}
+.transport{
+  display:inline-flex;align-items:center;gap:10px;height:34px;padding:0 16px;
+  border:1px solid var(--ink);font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  transition:.14s;min-width:110px;justify-content:center;
+}
+.transport:hover{background:var(--ink);color:#050505}
+.transport i{
+  display:block;width:0;height:0;border-left:8px solid currentColor;
+  border-top:5px solid transparent;border-bottom:5px solid transparent;
+}
+.transport.playing i{
+  width:9px;height:11px;border:0;
+  background:linear-gradient(90deg,currentColor 0 3px,transparent 3px 6px,currentColor 6px 9px);
+}
+.tool{
+  height:34px;padding:0 10px;border:1px solid var(--line);
+  font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--dim);
+  display:inline-flex;align-items:center;gap:6px;transition:.12s;
+}
+.tool:hover{border-color:var(--ink);color:var(--ink)}
+.tool.on{color:var(--lime);border-color:rgba(216,255,62,.4)}
+
+/* stage */
+main{min-height:0;display:flex;align-items:center;justify-content:center;padding:14px}
+.monitor{
+  position:relative;
+  width:min(100%, calc((100vh - 54px - 46px - 28px) * 16 / 9));
+  aspect-ratio:16/9;max-height:100%;
+  background:#000;border:1px solid var(--line);overflow:hidden;
+}
+.monitor::after{
+  content:"";position:absolute;inset:0;z-index:30;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.05) 0 1px,transparent 1px 3px);
+  opacity:.26;
+}
+.monitor::before{
+  content:"";position:absolute;left:0;right:0;height:86px;z-index:29;pointer-events:none;
+  background:linear-gradient(to bottom,transparent,rgba(239,233,220,.05),transparent);
+  animation:track 9s linear infinite;
+}
+@keyframes track{from{top:-86px}to{top:100%}}
+
+.stage{position:absolute;inset:0;display:grid;gap:2px;background:#000;
+  grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr)}
+.cell{position:relative;overflow:hidden;background:#080808;min-width:0;min-height:0}
+.cell::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.025) 0 1px,transparent 1px 7px);
+}
+.cell video{
+  position:absolute;inset:0;z-index:1;display:block;width:100%;height:100%;
+  object-fit:cover;background:#000;opacity:0;transition:opacity .06s;
+}
+.cell video.on{opacity:1}
+.cell .flash{position:absolute;inset:0;z-index:3;background:#fff;opacity:0;pointer-events:none}
+.cell.hit .flash{animation:hitF .22s steps(2,end)}
+.cell.hit video.on{animation:jit .2s steps(2,end)}
+@keyframes hitF{from{opacity:.4}to{opacity:0}}
+@keyframes jit{
+  0%{transform:none}
+  30%{transform:translate(-3px,1px) scale(1.015)}
+  60%{transform:translate(2px,-1px)}
+  100%{transform:none}
+}
+.cell.hit{box-shadow:inset 4px 0 0 rgba(255,59,31,.65),inset -4px 0 0 rgba(0,225,255,.6)}
+.cell.stuck{box-shadow:inset 0 0 0 2px var(--red)}
+.cell.stuck .flash{background:var(--red);opacity:.1;animation:none}
+.cell.frozen{box-shadow:inset 0 0 0 1px rgba(0,225,255,.55)}
+
+/* the master cell */
+.cell.master{box-shadow:inset 0 0 0 2px rgba(216,255,62,.85);z-index:2}
+.cell.master::after{
+  content:"MASTER · 完整播放";position:absolute;z-index:6;left:7px;top:7px;
+  font-family:var(--mono);font-size:7px;letter-spacing:.14em;color:var(--lime);
+  background:rgba(0,0,0,.6);padding:2px 6px;pointer-events:none;
+}
+.cell.master .tag{
+  position:absolute;z-index:6;right:7px;bottom:7px;
+  font-family:var(--mono);font-size:7px;letter-spacing:.12em;color:rgba(239,233,220,.7);
+  background:rgba(0,0,0,.55);padding:2px 6px;pointer-events:none;
+}
+
+/* overlays */
+.overlay{
+  position:absolute;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 45%,rgba(8,8,8,.7),rgba(3,3,3,.94));
+  backdrop-filter:blur(2px);transition:opacity .4s;overflow:auto;
+}
+.overlay.hidden{opacity:0;pointer-events:none}
+.ov{display:none;flex-direction:column;align-items:center;text-align:center;padding:16px;max-height:100%;overflow:auto}
+.ov.active{display:flex}
+.kicker{font-family:var(--mono);font-size:8px;letter-spacing:.32em;color:var(--dim);margin:0 0 16px}
+.big{
+  position:relative;margin:0;font-size:clamp(64px,11vw,138px);font-weight:900;letter-spacing:-.06em;line-height:.9;
+  animation:glitchA 6s steps(1,end) infinite;
+}
+.big::before,.big::after{content:attr(data-text);position:absolute;left:0;top:0;mix-blend-mode:screen;pointer-events:none}
+.big::before{color:var(--red);transform:translate(-3px,2px);opacity:.9}
+.big::after{color:var(--cyan);transform:translate(3px,-2px);opacity:.8}
+.ov-sub{font-size:12px;letter-spacing:.2em;color:var(--ink);margin:16px 0 0;line-height:1.9}
+.ov-sub em{font-style:normal;color:var(--lime)}
+.start{
+  margin-top:26px;display:inline-flex;align-items:center;gap:12px;
+  padding:13px 26px;border:1px solid var(--ink);
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink);
+  transition:.16s;background:rgba(239,233,220,.02);
+}
+.start i{width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent;display:block}
+.start:hover{background:var(--ink);color:#050505}
+.start:disabled{opacity:.35;cursor:wait}
+.ov-foot{font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--dimmer);margin:20px 0 0;line-height:1.9}
+body.live .overlay{opacity:0;pointer-events:none}
+body.paused .monitor::after{opacity:.55}
+.paused-badge{
+  position:absolute;inset:0;z-index:28;display:none;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.5em;color:rgba(239,233,220,.75);
+  background:rgba(0,0,0,.28);pointer-events:none;
+}
+body.paused .paused-badge{display:flex}
+body.paused.live .paused-badge{display:flex}
+
+/* peak burst */
+body.peak .monitor{
+  box-shadow:0 0 0 2px var(--red), 0 0 46px rgba(255,59,31,.28);
+  animation:shake .14s steps(2) infinite;
+}
+body.peak .cell.master{box-shadow:inset 0 0 0 2px var(--lime)}
+@keyframes shake{
+  0%{transform:translate(0,0)}
+  50%{transform:translate(-2px,1px)}
+  100%{transform:translate(2px,-1px)}
+}
+
+/* footer */
+.foot{
+  display:flex;align-items:center;gap:16px;padding:0 16px;
+  border-top:1px solid var(--line);background:var(--panel);
+  font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--dimmer);
+  position:relative;z-index:40;
+}
+.timeline{position:relative;flex:1;height:22px;background:rgba(239,233,220,.04);border:1px solid var(--line-soft)}
+.timeline .divider{position:absolute;top:0;bottom:0;width:1px;background:rgba(239,233,220,.22)}
+.peak-marks{position:absolute;inset:0;pointer-events:none}
+.peak-mark{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,59,31,.55)}
+.peak-mark::after{
+  content:"";position:absolute;top:2px;left:-2px;width:6px;height:6px;background:var(--red);
+  transform:rotate(45deg);
+}
+.timeline .label{
+  position:absolute;top:50%;transform:translateY(-50%);font-size:7px;letter-spacing:.12em;color:var(--dimmer);
+  pointer-events:none;
+}
+.playhead{
+  position:absolute;top:-4px;bottom:-4px;left:0;width:1px;background:var(--red);
+  box-shadow:0 0 8px rgba(255,59,31,.7);pointer-events:none;
+}
+.playhead::before{content:"";position:absolute;top:-2px;left:-2px;width:5px;height:5px;background:var(--red)}
+.tc{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--dim);min-width:96px;text-align:right}
+.tc b{color:var(--ink);font-weight:400}
+.replay{
+  width:26px;height:26px;border:1px solid var(--line);display:grid;place-items:center;
+  color:var(--dim);font-size:12px;transition:.12s;
+}
+.replay:hover{border-color:var(--ink);color:var(--ink)}
+
+@media (max-height:640px){
+  .big{font-size:clamp(40px,9vh,84px)}
+  .kicker{margin-bottom:10px}
+  .ov-sub{margin-top:10px;font-size:10.5px}
+  .start{margin-top:14px;padding:10px 20px}
+  .ov-foot{margin-top:12px}
+}
+@media (max-width:880px){
+  .seq{display:none}
+  .transport{min-width:96px;padding:0 12px}
+}
+@media (max-width:600px){
+  .brand .en{display:none}
+  .tool span{display:none}
+  .tc{min-width:76px}
+}
+@media (prefers-reduced-motion:reduce){
+  .big,.brand .cn{animation:none}
+  .monitor::before{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">
+    <span class="cn" data-text="鬼畜">鬼畜</span>
+    <span class="en">GUICHU<br>DECK</span>
+  </div>
+  <div class="seq" id="seqLabel">SEQ 01 · <b>夜宴</b></div>
+  <div class="controls">
+    <button class="transport" id="btnPlay" aria-pressed="false"><i></i><span id="playText">播放</span></button>
+    <button class="tool on" id="btnMute" aria-pressed="false">SOUND <span>ON</span></button>
+    <button class="tool" id="btnFull" title="全屏 (F)">⛶</button>
+  </div>
+</header>
+
+<main>
+  <div class="monitor" id="monitor">
+    <div class="stage" id="stage"></div>
+    <div class="paused-badge">PAUSED</div>
+
+    <div class="overlay" id="overlay">
+      <div class="ov active" id="ovStart">
+        <p class="kicker">ONE SCREEN / TWO CLIPS / UNCUT</p>
+        <h1 class="big" data-text="鬼畜">鬼畜</h1>
+        <p class="ov-sub">中间格完整播放两段原片<br><em>其余八格跟随节奏卡顿、重复</em></p>
+        <button class="start" id="btnStart" disabled><i></i>载入中</button>
+        <p class="ov-foot" id="ovFoot">素材 A —:— · 素材 B —:—</p>
+      </div>
+      <div class="ov" id="ovEnd">
+        <p class="kicker">END</p>
+        <h1 class="big" data-text="鬼畜">鬼畜</h1>
+        <p class="ov-sub">两段原片 · 完整播放完毕</p>
+        <button class="start" id="btnAgain"><i></i>从头再看</button>
+        <p class="ov-foot">中格完整 · 八格回声</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="timeline" id="timeline">
+    <div class="divider" id="divider"></div>
+    <div class="peak-marks" id="peakMarks"></div>
+    <div class="label" id="labelA" style="left:8px">A</div>
+    <div class="label" id="labelB" style="left:calc(50% + 8px)">B</div>
+    <div class="playhead" id="playhead"></div>
+  </div>
+  <div class="tc"><b id="tcNow">00:00</b> / <span id="tcAll">00:00</span></div>
+  <button class="replay" id="btnReplay" title="重播">↻</button>
+</footer>
+
+<!-- 原声：从原片提取的 PCM 音轨 -->
+<audio id="audA" src="media/a.wav" preload="auto"></audio>
+<audio id="audB" src="media/b.wav" preload="auto"></audio>
+<audio id="tapA" src="media/a.wav" preload="auto"></audio>
+<audio id="tapB" src="media/b.wav" preload="auto"></audio>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+  const pad2 = n => String(n).padStart(2, '0');
+  const mmss = s => pad2(Math.floor(Math.max(0, s) / 60)) + ':' + pad2(Math.floor(Math.max(0, s) % 60));
+
+  const M = {
+    A: { url: 'media/a.mp4', dur: 53, name: '夜宴' },
+    B: { url: 'media/b.mp4', dur: 32.83, name: '阳台' }
+  };
+
+  const S = {
+    started: false,
+    playing: false,
+    track: 0,
+    raf: 0,
+    nextTap: 3.6,
+    tapUntil: 0,
+    duckUntil: 0,
+    muted: false,
+    peaks: [],
+    nextPeak: 0,
+    peak: null
+  };
+
+  const cells = [];
+  const echoes = [];
+  const DELAYS = [0.08, 0.34, 0.19, 0.66, 0.27, 0.98, 0.48, 0.76];
+  const stageEl = $('#stage');
+  const overlay = $('#overlay');
+  const centerEl = () => cells[4];
+
+  const AUD = { a: null, b: null, tapA: null, tapB: null };
+  const totalDur = () => M.A.dur + M.B.dur;
+
+  /* ---------------- build ---------------- */
+  function buildStage() {
+    stageEl.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+      const el = document.createElement('div');
+      el.className = 'cell';
+      el.dataset.i = String(i);
+
+      if (i === 4) {
+        el.classList.add('master');
+        el.innerHTML =
+          '<video class="va on" playsinline muted preload="auto"></video>' +
+          '<video class="vb" playsinline muted preload="auto"></video>' +
+          '<div class="flash"></div>' +
+          '<span class="tag" id="masterTag">A · 夜宴</span>';
+        const va = el.querySelector('.va');
+        const vb = el.querySelector('.vb');
+        va.src = M.A.url;
+        vb.src = M.B.url;
+        [va, vb].forEach(v => { v.muted = true; v.volume = 0; });
+        stageEl.appendChild(el);
+        cells.push({ i, el, va, vb, v: va, master: true, stuck: null, freezeUntil: 0 });
+      } else {
+        el.innerHTML =
+          '<video class="on" playsinline muted preload="auto"></video>' +
+          '<div class="flash"></div>';
+        const v = el.querySelector('video');
+        const k = i < 4 ? i : i - 1;
+        v.src = M.A.url;
+        v.muted = true;
+        v.volume = 0;
+        try { v.preservesPitch = false; } catch (e) {}
+        stageEl.appendChild(el);
+
+        const a = document.createElement('audio');
+        a.src = 'media/a.wav';
+        a.preload = 'auto';
+        a.volume = 0.2 + (k % 4) * 0.05;
+        a.muted = S.muted;
+        try { a.preservesPitch = false; } catch (e) {}
+
+        cells.push({
+          i, el, v, a, master: false, stuck: null, freezeUntil: 0,
+          rateUntil: 0,
+          nextRate: 3.0 + k * 0.4,
+          delay: DELAYS[k] + Math.random() * 0.03,
+          nextStutter: 1.2 + k * 0.2,
+          nextFreeze: 2.1 + k * 0.26
+        });
+      }
+    }
+    echoes.length = 0;
+    cells.forEach(c => { if (!c.master) echoes.push(c); });
+  }
+
+  /* ---------------- materials ---------------- */
+  function loadClip(src) {
+    return new Promise(resolve => {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.muted = true;
+      v.src = src;
+      let done = false;
+      const finish = ok => {
+        if (done) return;
+        done = true;
+        const d = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+        resolve(ok && d ? d : 0);
+      };
+      v.addEventListener('loadedmetadata', () => finish(true), { once: true });
+      v.addEventListener('error', () => finish(false), { once: true });
+      setTimeout(() => finish(v.readyState >= 1), 15000);
+    });
+  }
+
+  /* ---------------- audio ---------------- */
+  function audioInit() {
+    AUD.a = $('#audA');
+    AUD.b = $('#audB');
+    AUD.tapA = $('#tapA');
+    AUD.tapB = $('#tapB');
+    [AUD.a, AUD.b, AUD.tapA, AUD.tapB].forEach(el => {
+      if (!el) return;
+      el.muted = S.muted;
+      el.volume = 0.9;
+    });
+    if (AUD.tapA) AUD.tapA.volume = 0.55;
+    if (AUD.tapB) AUD.tapB.volume = 0.55;
+    echoes.forEach(e => { e.v.muted = true; e.a.muted = S.muted; });
+  }
+
+  const centerAudio = () => (S.track ? AUD.b : AUD.a);
+  const centerTap = () => (S.track ? AUD.tapB : AUD.tapA);
+
+  /* ---------------- transport ---------------- */
+  function updateTransport() {
+    const b = $('#btnPlay');
+    b.classList.toggle('playing', S.playing);
+    b.setAttribute('aria-pressed', String(S.playing));
+    $('#playText').textContent = S.playing ? '暂停' : (S.started ? '继续' : '播放');
+  }
+
+  function startShow() {
+    if (!S.started) resetToStart();
+    S.playing = true;
+    overlay.classList.add('hidden');
+    document.body.classList.add('live');
+    document.body.classList.remove('paused');
+    if (S.peak) document.body.classList.add('peak');
+
+    const c = centerEl();
+    const cur = S.track ? c.vb : c.va;
+    const p1 = cur.play(); if (p1 && p1.catch) p1.catch(() => {});
+
+    const aud = centerAudio();
+    if (aud) {
+      aud.muted = S.muted;
+      aud.volume = 0.9;
+      const p2 = aud.play(); if (p2 && p2.catch) p2.catch(() => {});
+    }
+
+    echoes.forEach(e => {
+      const p = e.v.play(); if (p && p.catch) p.catch(() => {});
+      const q = e.a.play(); if (q && q.catch) q.catch(() => {});
+    });
+
+    S.raf = requestAnimationFrame(tick);
+    updateTransport();
+  }
+
+  function pauseShow() {
+    S.playing = false;
+    cancelAnimationFrame(S.raf);
+    S.raf = 0;
+    centerEl().va.pause();
+    centerEl().vb.pause();
+    [AUD.a, AUD.b, AUD.tapA, AUD.tapB].forEach(el => { if (el) el.pause(); });
+    echoes.forEach(e => { e.v.pause(); e.a.pause(); });
+    document.body.classList.add('paused');
+    updateTransport();
+  }
+
+  function toggleShow() {
+    if (S.playing) pauseShow();
+    else startShow();
+  }
+
+  function resetToStart() {
+    S.started = true;
+    S.track = 0;
+    S.nextTap = 3.6;
+    S.tapUntil = 0;
+    S.duckUntil = 0;
+    S.peak = null;
+    S.nextPeak = 0;
+    document.body.classList.remove('peak');
+
+    const c = centerEl();
+    c.va.classList.add('on');
+    c.vb.classList.remove('on');
+    try { c.va.currentTime = 0; } catch (e) {}
+    try { c.vb.currentTime = 0; } catch (e) {}
+
+    echoes.forEach(e => {
+      e.stuck = null;
+      e.freezeUntil = 0;
+      e.el.classList.remove('stuck', 'frozen');
+      if (e.v.getAttribute('src') !== M.A.url) {
+        e.v.src = M.A.url;
+        e.v.load();
+      }
+      e.v.classList.add('on');
+      try { e.v.currentTime = 0; } catch (err) {}
+      if (e.a.src.indexOf('a.wav') < 0) e.a.src = 'media/a.wav';
+      try { e.a.currentTime = 0; } catch (err) {}
+      e.a.muted = S.muted;
+    });
+
+    echoes.forEach((e, k) => {
+      e.nextStutter = 1.2 + k * 0.2 + Math.random() * 0.35;
+      e.nextFreeze = 2.1 + k * 0.26 + Math.random() * 0.45;
+      e.nextRate = 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.rateUntil = 0;
+      e.v.playbackRate = 1;
+      e.v.muted = S.muted;
+    });
+
+    if (AUD.a) { try { AUD.a.currentTime = 0; } catch (e) {} }
+    if (AUD.b) { try { AUD.b.currentTime = 0; } catch (e) {} }
+    setTrackLabel(0);
+    updateHud(0);
+  }
+
+  function setTrackLabel(track) {
+    $('#seqLabel').innerHTML = track
+      ? 'SEQ 02 · <b>' + M.B.name + '</b>'
+      : 'SEQ 01 · <b>' + M.A.name + '</b>';
+    const tag = $('#masterTag');
+    if (tag) tag.textContent = track ? 'B · ' + M.B.name : 'A · ' + M.A.name;
+  }
+
+  function switchToB() {
+    if (S.track === 1) return;
+    S.track = 1;
+
+    const c = centerEl();
+    c.va.pause();
+    c.va.classList.remove('on');
+    c.vb.classList.add('on');
+    try { c.vb.currentTime = 0; } catch (e) {}
+    if (S.playing) { const p = c.vb.play(); if (p && p.catch) p.catch(() => {}); }
+
+    if (AUD.a) AUD.a.pause();
+    if (AUD.b) {
+      AUD.b.muted = S.muted;
+      AUD.b.volume = 0.9;
+      try { AUD.b.currentTime = 0; } catch (e) {}
+      if (S.playing) { const p = AUD.b.play(); if (p && p.catch) p.catch(() => {}); }
+    }
+
+    echoes.forEach(e => {
+      e.stuck = null;
+      e.freezeUntil = 0;
+      e.el.classList.remove('stuck', 'frozen');
+      e.v.src = M.B.url;
+      e.v.load();
+      e.v.classList.add('on');
+      e.a.src = 'media/b.wav';
+      e.a.muted = S.muted;
+      if (S.playing) { const p = e.v.play(); if (p && p.catch) p.catch(() => {}); }
+    });
+
+    echoes.forEach((e, k) => {
+      e.nextStutter = M.A.dur + 1.2 + k * 0.2 + Math.random() * 0.35;
+      e.nextFreeze = M.A.dur + 2.1 + k * 0.26 + Math.random() * 0.45;
+      e.nextRate = M.A.dur + 3.0 + k * 0.4 + Math.random() * 1.2;
+      e.rateUntil = 0;
+      e.v.playbackRate = 1;
+      e.v.muted = S.muted;
+    });
+
+    flashAll();
+    setTrackLabel(1);
+    S.nextTap = M.A.dur + 3.2;
+    S.nextPeak = 3;
+  }
+
+  function endShow() {
+    S.playing = false;
+    cancelAnimationFrame(S.raf);
+    S.raf = 0;
+    centerEl().va.pause();
+    centerEl().vb.pause();
+    [AUD.a, AUD.b, AUD.tapA, AUD.tapB].forEach(el => { if (el) el.pause(); });
+    echoes.forEach(e => { e.v.pause(); e.a.pause(); });
+    document.body.classList.remove('live');
+    document.body.classList.remove('paused');
+    document.body.classList.remove('peak');
+    S.peak = null;
+    updateTransport();
+    setTimeout(() => {
+      $('#ovStart').classList.remove('active');
+      $('#ovEnd').classList.add('active');
+      overlay.classList.remove('hidden');
+    }, 500);
+  }
+
+  /* ---------------- effects ---------------- */
+  function flash(c) {
+    c.el.classList.remove('hit');
+    void c.el.offsetWidth;
+    c.el.classList.add('hit');
+    setTimeout(() => c.el.classList.remove('hit'), 230);
+  }
+  function flashAll() { cells.forEach(flash); }
+
+  function stutterCell(e, now, cap) {
+    if (e.stuck || e.freezeUntil) return;
+    if (echoes.filter(x => x.stuck).length >= (cap || 3)) return;
+    e.stuck = { point: Math.max(0, e.v.currentTime - 0.02), next: now, until: now + 280 + Math.random() * 220 };
+    e.el.classList.add('stuck');
+    flash(e);
+  }
+
+  function freezeCell(e, now) {
+    if (e.stuck || e.freezeUntil) return;
+    if (echoes.filter(x => x.freezeUntil).length >= 2) return;
+    e.v.pause();
+    e.freezeUntil = now + 300 + Math.random() * 320;
+    e.el.classList.add('frozen');
+    flash(e);
+  }
+
+  function triggerTap(now, ct) {
+    const tap = centerTap();
+    const aud = centerAudio();
+    if (!tap || !S.playing) return;
+    try { tap.currentTime = Math.max(0, ct - 0.12 - Math.random() * 0.4); } catch (err) {}
+    tap.muted = S.muted;
+    tap.volume = 0.45;
+    const p = tap.play(); if (p && p.catch) p.catch(() => {});
+    S.tapUntil = now + 260;
+    if (aud) { aud.volume = 0.5; S.duckUntil = now + 230; }
+    const e = echoes[(Math.random() * echoes.length) | 0];
+    if (e) flash(e);
+  }
+
+  /* ---------- peak bursts ---------- */
+  function startPeak(pk, now) {
+    S.peak = { until: now + pk.dur * 1000, nextStutter: 0, nextRate: 0, nextTap: 0 };
+    document.body.classList.add('peak');
+    flashAll();
+    for (let k = 0; k < 5; k++) {
+      const e = echoes[k];
+      if (!e || e.stuck || e.freezeUntil) continue;
+      e.stuck = { point: Math.max(0, e.v.currentTime - 0.03), next: now, until: now + 200 + Math.random() * 160 };
+      e.el.classList.add('stuck');
+    }
+    triggerTap(now, centerEl().v.currentTime);
+  }
+
+  function peakTick(now, ct) {
+    const p = S.peak;
+    if (!p) return;
+    if (now > p.until) {
+      S.peak = null;
+      document.body.classList.remove('peak');
+      return;
+    }
+    if (now >= p.nextStutter) {
+      p.nextStutter = now + 170;
+      for (let k = 0; k < 3; k++) {
+        const e = echoes[(Math.random() * echoes.length) | 0];
+        if (e) stutterCell(e, now, 6);
+      }
+    }
+    if (now >= p.nextRate) {
+      p.nextRate = now + 330;
+      const e = echoes[(Math.random() * echoes.length) | 0];
+      if (e && !e.stuck && !e.freezeUntil) {
+        const r = [0.5, 0.6, 1.8, 2][(Math.random() * 4) | 0];
+        e.v.playbackRate = r;
+        e.a.playbackRate = r;
+        e.rateUntil = now + 320 + Math.random() * 300;
+      }
+    }
+    if (now >= p.nextTap) {
+      p.nextTap = now + 460;
+      triggerTap(now, ct);
+    }
+  }
+
+  /* ---------------- clock ---------------- */
+  function tick(now) {
+    if (!S.playing) return;
+
+    const c = centerEl();
+    const cur = S.track ? c.vb : c.va;
+    c.v = cur;
+    const dur = S.track ? M.B.dur : M.A.dur;
+    const ct = cur.currentTime || 0;
+    const gt = (S.track ? M.A.dur : 0) + ct;
+
+    /* center audio follows the picture */
+    const aud = centerAudio();
+    if (aud && Math.abs(aud.currentTime - ct) > 0.12) {
+      try { aud.currentTime = ct; } catch (e) {}
+    }
+
+    if (S.track === 0 && (cur.ended || ct >= M.A.dur - 0.06)) {
+      switchToB();
+      S.raf = requestAnimationFrame(tick);
+      return;
+    }
+
+    if (gt >= S.nextTap) {
+      triggerTap(now, ct);
+      S.nextTap = gt + 2.8 + Math.random() * 1.7;
+    }
+
+    if (S.nextPeak < S.peaks.length && gt >= S.peaks[S.nextPeak].at) {
+      startPeak(S.peaks[S.nextPeak], now);
+      S.nextPeak++;
+    }
+    if (S.peak) peakTick(now, ct);
+
+    /* echoes follow the middle cell with their own delay and their own beat */
+    const ed = S.track ? M.B.dur : M.A.dur;
+    echoes.forEach((e, k) => {
+      if (e.stuck) {
+        if (now >= e.stuck.next) {
+          e.stuck.next = now + 105;
+          try { e.v.currentTime = e.stuck.point; } catch (err) {}
+          try { e.a.currentTime = e.stuck.point; } catch (err) {}
+        }
+        if (now > e.stuck.until) {
+          e.stuck = null;
+          e.el.classList.remove('stuck');
+          if (S.playing) {
+            const p = e.v.play(); if (p && p.catch) p.catch(() => {});
+            const q = e.a.play(); if (q && q.catch) q.catch(() => {});
+          }
+        }
+        return;
+      }
+      if (e.freezeUntil) {
+        if (now > e.freezeUntil) {
+          e.freezeUntil = 0;
+          e.el.classList.remove('frozen');
+          if (S.playing) {
+            const p = e.v.play(); if (p && p.catch) p.catch(() => {});
+            const q = e.a.play(); if (q && q.catch) q.catch(() => {});
+          }
+        }
+        return;
+      }
+
+      if (gt >= e.nextStutter) {
+        stutterCell(e, now);
+        e.nextStutter = gt + 1.0 + Math.random() * 1.5;
+        return;
+      }
+      if (gt >= e.nextFreeze) {
+        freezeCell(e, now);
+        e.nextFreeze = gt + 2.0 + Math.random() * 2.1;
+        return;
+      }
+
+      /* 变声/变速：短促的卡通化处理 */
+      if (e.rateUntil) {
+        if (now > e.rateUntil) { e.rateUntil = 0; e.v.playbackRate = 1; e.a.playbackRate = 1; }
+      } else if (gt >= e.nextRate) {
+        e.nextRate = gt + 3.2 + Math.random() * 3.6;
+        const rates = [0.6, 0.75, 1.35, 1.6];
+        const r = rates[(Math.random() * rates.length) | 0];
+        e.v.playbackRate = r;
+        e.a.playbackRate = r;
+        e.rateUntil = now + 420 + Math.random() * 420;
+        flash(e);
+      }
+
+      if (e.v.paused) { const p = e.v.play(); if (p && p.catch) p.catch(() => {}); }
+      if (e.a.paused) { const q = e.a.play(); if (q && q.catch) q.catch(() => {}); }
+      const target = clamp(ct - e.delay, 0, Math.max(0, ed - 0.08));
+      const tol = e.rateUntil ? 0.75 : 0.3;
+      if (Math.abs(e.v.currentTime - target) > tol) {
+        try { e.v.currentTime = target; } catch (err) {}
+      }
+      if (e.a.readyState >= 1 && Math.abs(e.a.currentTime - target) > tol) {
+        try { e.a.currentTime = target; } catch (err) {}
+      }
+    });
+
+    if (S.tapUntil && now > S.tapUntil) {
+      S.tapUntil = 0;
+      if (AUD.tapA) AUD.tapA.pause();
+      if (AUD.tapB) AUD.tapB.pause();
+    }
+    if (S.duckUntil && now > S.duckUntil) {
+      S.duckUntil = 0;
+      if (aud) aud.volume = 0.9;
+    }
+
+    updateHud(gt);
+
+    if (S.track === 1 && (cur.ended || ct >= M.B.dur - 0.04)) {
+      endShow();
+      return;
+    }
+
+    S.raf = requestAnimationFrame(tick);
+  }
+
+  function updateHud(gt) {
+    const total = totalDur();
+    $('#tcNow').textContent = mmss(gt);
+    $('#tcAll').textContent = mmss(total);
+    $('#playhead').style.left = (clamp(gt / total, 0, 1) * 100) + '%';
+  }
+
+  function updateLayout() {
+    const total = totalDur();
+    const pct = (M.A.dur / total) * 100;
+    $('#divider').style.left = pct + '%';
+    $('#labelB').style.left = 'calc(' + pct + '% + 8px)';
+    $('#tcAll').textContent = mmss(total);
+    $('#playhead').style.left = '0%';
+  }
+
+  function buildPeaks() {
+    S.peaks = [
+      { at: 2.0, dur: 2.6 },
+      { at: 8.75, dur: 2.8 },
+      { at: 32.0, dur: 3.0 },
+      { at: M.A.dur + 2.75, dur: 2.6 },
+      { at: M.A.dur + 18.25, dur: 2.8 },
+      { at: M.A.dur + 23.5, dur: 2.8 }
+    ];
+    const box = $('#peakMarks');
+    if (!box) return;
+    const total = totalDur();
+    box.innerHTML = S.peaks.map(p =>
+      '<i class="peak-mark" style="left:' + (p.at / total * 100).toFixed(2) + '%"></i>'
+    ).join('');
+  }
+
+  /* ---------------- ui ---------------- */
+  function toggleMute() {
+    S.muted = !S.muted;
+    [AUD.a, AUD.b, AUD.tapA, AUD.tapB].forEach(el => { if (el) el.muted = S.muted; });
+    echoes.forEach(e => { e.a.muted = S.muted; });
+    const b = $('#btnMute');
+    b.classList.toggle('on', !S.muted);
+    b.setAttribute('aria-pressed', String(S.muted));
+    b.innerHTML = 'SOUND <span>' + (S.muted ? 'OFF' : 'ON') + '</span>';
+  }
+
+  function toggleFull() {
+    const el = $('#monitor');
+    if (!document.fullscreenElement) {
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      if (req) { try { const r = req.call(el); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+    } else {
+      document.exitFullscreen();
+    }
+  }
+
+  $('#btnPlay').addEventListener('click', toggleShow);
+  $('#btnStart').addEventListener('click', startShow);
+  $('#btnAgain').addEventListener('click', () => { resetToStart(); startShow(); });
+  $('#btnReplay').addEventListener('click', () => { resetToStart(); startShow(); });
+  $('#btnMute').addEventListener('click', toggleMute);
+  $('#btnFull').addEventListener('click', toggleFull);
+  $('#monitor').addEventListener('dblclick', toggleFull);
+
+  document.addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); toggleShow(); return; }
+    const k = (e.key || '').toLowerCase();
+    if (k === 'f') { e.preventDefault(); toggleFull(); }
+    if (k === 'm') { e.preventDefault(); toggleMute(); }
+  });
+
+  /* ---------------- init ---------------- */
+  buildStage();
+  audioInit();
+
+  Promise.all([loadClip(M.A.url), loadClip(M.B.url)]).then(([da, db]) => {
+    if (!da || !db) {
+      $('.kicker').textContent = 'MEDIA NOT FOUND';
+      $('#ovFoot').textContent = '读不到 media/a.mp4 或 media/b.mp4 —— 请确认 media 文件夹与 index.html 在同一个目录';
+      $('#btnStart').textContent = '素材缺失';
+      return;
+    }
+    M.A.dur = da;
+    M.B.dur = db;
+    updateLayout();
+    buildPeaks();
+    $('#ovFoot').textContent = '素材 A ' + mmss(M.A.dur) + ' · 素材 B ' + mmss(M.B.dur) + ' · 中格顺序完整播放';
+    const btn = $('#btnStart');
+    btn.disabled = false;
+    btn.innerHTML = '<i></i>开始播放';
+    updateTransport();
+  });
+
+  window.__deck = { M, S, cells, startShow, pauseShow };
+
+})();
+</script>
+</body>
+</html>
